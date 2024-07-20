@@ -7,8 +7,8 @@ if (process.argv.length < 3) {
 
 const password = process.argv[2];
 
-const url = 
-  `mongodb+srv://nickperry604:${password}@fullstackcourse.gdpv3p1.mongodb.net/PhonebookData?retryWrites=true&w=majority&appName=FullstackCourse`
+const url =
+  `mongodb+srv://nickperry604:${password}@fullstackcourse.gdpv3p1.mongodb.net/PhonebookData?retryWrites=true&w=majority&appName=FullstackCourse`;
 
 mongoose.set('strictQuery', false);
 mongoose.connect(url);
@@ -26,7 +26,7 @@ if (process.argv.length === 3) {
       console.log(`${contact.name} ${contact.number}`);
     });
     mongoose.connection.close();
-  })
+  });
   return;
 }
 
@@ -38,4 +38,4 @@ const contact = new Contact({
 contact.save().then(result => {
   console.log('Contact added!', result);
   mongoose.connection.close();
-})
+});

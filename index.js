@@ -7,8 +7,8 @@ const Contact = require('./models/contact');
 
 app.use(express.static('dist'));
 
-morgan.token('body', function (req, res) { return JSON.stringify(req.body) });
-app.use(morgan(`:method :url :status :res[content-length] - :response-time ms :body`));
+morgan.token('body', function (req) { return JSON.stringify(req.body); });
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
 
 // Pretty-print JSON responses
 app.set('json spaces', 2);
@@ -17,15 +17,17 @@ const cors = require('cors');
 app.use(cors());
 app.use(express.json());
 
-const errorHandler = (error, req, res, next) => { 
+const errorHandler = (error, req, res, next) => {
   console.error(error);
 
   if (error.name === 'CastError') {
-    res.status(400).send({ error: 'malformatted id '});
+    res.status(400).send({ error: 'malformatted id ' });
+  } else if (error.name === 'ValidationError') {
+    res.status(400).json({ error: error.message } );
   }
 
   next(error);
-}
+};
 
 // retrieve home page
 app.get('/', (request, response) => {
@@ -45,24 +47,24 @@ app.get('/api/contacts', (req, res) => {
 });
 
 // retrieve info page
-app.get('/info', (req, res) => {
+app.get('/info', (req, res, next) => {
   Contact.find({})
     .then(result => {
       const currentDateTime = (new Date()).toString();
       const info = `Phonebook has info for ${result.length} people`;
       res.send(
         `<p>${info}</p><p>${currentDateTime}</p>`
-      )
+      );
     })
     .catch(error => {
       next(error);
-    })
+    });
 });
 
 // retrieve single contact
-app.get('/api/contacts/:id', (req, res) => {
+app.get('/api/contacts/:id', (req, res, next) => {
   const id = req.params.id;
-  
+
   Contact.findById(id)
     .then(contact => {
       if (contact) {
@@ -73,11 +75,11 @@ app.get('/api/contacts/:id', (req, res) => {
     })
     .catch(error => {
       next(error);
-    })
+    });
 });
 
 // remove a contact from contacts
-app.delete('/api/contacts/:id', (req, res) => {
+app.delete('/api/contacts/:id', (req, res, next) => {
   const id = req.params.id;
   Contact.findByIdAndDelete(id)
     .then(result => {
@@ -86,11 +88,11 @@ app.delete('/api/contacts/:id', (req, res) => {
     })
     .catch(error => {
       next(error);
-    })
+    });
 });
 
 // create a new contact
-app.post('/api/contacts', (req, res) => {
+app.post('/api/contacts', (req, res, next) => {
   let body = req.body;
   if (!body.name) {
     return res.status(404).json({
@@ -105,7 +107,7 @@ app.post('/api/contacts', (req, res) => {
   let contact = new Contact({
     name: body.name,
     number: body.number
-  })
+  });
 
   contact.save()
     .then(contact => {
@@ -116,14 +118,14 @@ app.post('/api/contacts', (req, res) => {
     });
 });
 
-app.put('/api/contacts/:id', (req, res) => {
+app.put('/api/contacts/:id', (req, res, next) => {
   const id = req.params.id;
   const body = req.body;
 
   let contact = {
     name: body.name,
     number: body.number
-  }
+  };
 
   Contact.findByIdAndUpdate(id, contact, { new: true })
     .then(updatedContact => {
